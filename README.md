@@ -2,6 +2,14 @@
 
 **Parameter-efficient LLM adaptation, evaluation, and adapter packaging on commodity GPUs.**
 
+## Live Demo
+
+- **TuneForge Web:** https://tuneforge-algosphere1.vercel.app
+- **Public read-only API:** https://tuneforge-public-api.vercel.app
+- **GitHub:** https://github.com/mohit231007/TuneForge
+
+The public deployment is intentionally read-only. It exposes verified Experiment 001 evidence, evaluation tooling, and the product interface without attaching an unauthenticated public GPU training queue.
+
 TuneForge turns a one-off LoRA notebook into a reproducible engineering project: prepare instruction data, establish a fixed baseline, inject LoRA adapters, fine-tune with TRL, persist only the adapter, and compare the adapted model against the untouched base model using the exact same prompts.
 
 ## Why this project exists
@@ -247,11 +255,16 @@ Run locally:
     npm install
     npm run dev
 
-Open:
+Open locally:
 
 - Public web UI: http://localhost:3000
 - API: http://localhost:8000
 - Operator Streamlit UI: http://localhost:8501
+
+Production:
+
+- Public web UI: https://tuneforge-algosphere1.vercel.app
+- Public read-only API: https://tuneforge-public-api.vercel.app
 
 The public UI includes:
 
