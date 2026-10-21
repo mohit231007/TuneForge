@@ -168,3 +168,31 @@ The reference dataset is a general instruction-following dataset. TuneForge does
 ## License
 
 See [LICENSE](LICENSE).
+
+
+## Containerized Studio
+
+TuneForge ships separate API and Studio containers.
+
+    docker compose up --build
+
+Then open:
+
+- Studio: http://localhost:8501
+- API: http://localhost:8000
+- OpenAPI: http://localhost:8000/docs
+
+The default compose stack demonstrates the service boundary and persistent run/adapter state. Production GPU execution should move to dedicated workers rather than blocking the web tier.
+
+## Evaluation evidence
+
+The evaluation pipeline records the exact same prompts against the base and adapted model and stores:
+
+- response text
+- generation latency
+- generated token count
+- tokens per second
+- word count
+- repetition ratio
+
+These are descriptive runtime/output metrics, not standalone semantic-quality scores. TuneForge deliberately separates measurable evidence from subjective claims.
