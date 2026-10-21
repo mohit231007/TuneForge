@@ -21,6 +21,24 @@ The reference experiment uses:
 
 > TuneForge is an independent portfolio project built from first principles around a reproducible PEFT workflow. It is not a wrapper around the original course notebook.
 
+## Measured Experiment 001
+
+A real Experiment 001 run was completed on an NVIDIA Tesla T4 using commit `a9637758949925ea6eb2a4d2fc46e4ad87636319`.
+
+| Measure | Result |
+|---|---:|
+| Trainable parameters | **1,126,400** |
+| Total parameters | **1,101,174,784** |
+| Trainable fraction | **0.1022908%** |
+| Final training loss | **1.831209** |
+| Adapter size | **7.7659 MiB** |
+| Global steps | **63** |
+| Peak reserved GPU memory observed | **3.0898 GiB** |
+
+The same two deterministic prompts were used before and after adaptation. On this small check, the adapted model followed the requested output format more closely: it answered the 2–3 sentence prompt in 2 sentences and the three-tip prompt with exactly 3 numbered tips. This is useful evidence of instruction-format adherence for this run, **not** a broad quality benchmark.
+
+See [the measured Experiment 001 evidence](docs/evidence/EXPERIMENT_001_EVIDENCE.md).
+
 ## TuneForge Studio
 
 TuneForge now includes a self-service Studio layer for creating LLM adaptation experiments from a web UI.

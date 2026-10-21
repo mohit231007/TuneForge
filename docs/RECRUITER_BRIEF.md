@@ -6,7 +6,7 @@ TuneForge is a self-service LLM adaptation and evaluation platform for LoRA and 
 
 Instead of keeping fine-tuning inside a research notebook, TuneForge separates the workflow into a public product UI, FastAPI control plane, queued GPU workers, reproducible experiment configs, telemetry, deterministic evaluation, and a governed adapter registry.
 
-The reference TinyLlama experiment trained approximately 0.10% of the model parameters using LoRA.
+The measured TinyLlama Experiment 001 trained **1,126,400 of 1,101,174,784 parameters (0.1022908%)**, producing a **7.7659 MiB** adapter on an NVIDIA Tesla T4.
 
 ## What this demonstrates
 
@@ -49,6 +49,9 @@ Observed in the initial TinyLlama LoRA experiment:
 - trainable fraction: approximately 0.1023%
 - LoRA targets: q_proj and v_proj
 - reference GPU: NVIDIA Tesla T4
+- final training loss: 1.831209
+- adapter size: 7.7659 MiB
+- same-prompt deterministic evaluation: adapted output followed both requested response formats more closely in the two-prompt reference check
 
 Do not interpret the parameter-efficiency result as a quality benchmark. Model-quality claims require broader evaluation.
 

@@ -30,7 +30,11 @@ The current system includes:
 - Dockerized service boundaries
 - Python + frontend CI
 
-The initial reference LoRA setup trained approximately **1.13M parameters out of 1.10B total — ~0.1023%**.
+The measured Experiment 001 trained **1,126,400 parameters out of 1,101,174,784 total — 0.1022908%**.
+
+On an NVIDIA Tesla T4, that produced a **7.7659 MiB adapter** with a final training loss of **1.8312**.
+
+For the two fixed deterministic evaluation prompts, the adapted model also followed the requested response format more closely: the 2–3 sentence request produced 2 sentences, and the three-tip request produced exactly 3 numbered tips. I treat that as a narrow instruction-adherence result, not a claim of broad model superiority.
 
 The part I found most valuable was not simply making training run.
 
@@ -48,8 +52,8 @@ Do not publish this post until:
 
 - PR stack is merged cleanly
 - CI is green
-- one real Experiment 001 run is saved
-- actual adapter size is recorded
-- actual loss history is recorded
-- actual base-vs-adapted outputs are available
+- [x] one real Experiment 001 run is saved
+- [x] actual adapter size is recorded
+- [x] actual loss history is recorded
+- [x] actual base-vs-adapted outputs are available
 - public UI has been deployed or screenshots are captured
