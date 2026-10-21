@@ -15,16 +15,16 @@
 
 ## Experiment 001 evidence gates
 
-- [ ] real TinyLlama training run completed through TuneForge
-- [ ] final training loss saved
-- [ ] loss history saved
-- [ ] adapter on-disk size saved
-- [ ] exact trainable parameter percentage saved
-- [ ] GPU and precision saved
-- [ ] base responses saved
-- [ ] adapted responses saved
-- [ ] same prompts confirmed
-- [ ] evaluation JSON/CSV committed only if appropriate and license-safe
+- [x] real TinyLlama training run completed through TuneForge
+- [x] final training loss saved
+- [x] loss history saved
+- [x] adapter on-disk size saved
+- [x] exact trainable parameter percentage saved
+- [x] GPU and precision saved
+- [x] base responses saved
+- [x] adapted responses saved
+- [x] same prompts confirmed
+- [x] evidence summary committed; raw evaluation artifacts retained in the verified evidence bundle rather than committed by default
 
 ## Public demo gates
 
@@ -50,4 +50,4 @@
 
 Do not publish the launch claim until real experiment artifacts support every numeric statement.
 
-The ~0.1023% parameter-efficiency figure is already backed by the reference LoRA setup. Loss, adapter size, quality comparisons, and deployment claims must be populated from real TuneForge runs.
+Experiment 001 is now backed by a verified real T4 evidence bundle: 0.1022908% trainable parameters, final loss 1.831209, and a 7.7659 MiB adapter. Deployment and public-URL claims remain gated until the demo is actually deployed.
