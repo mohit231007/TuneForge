@@ -41,3 +41,29 @@ If CUDA is available, Studio launches the existing TuneForge training CLI as a s
 Version 0.2 focuses on supervised LoRA adaptation.
 
 Planned extensions include QLoRA, richer dataset diagnostics, adapter registry/versioning, live loss streaming, evaluation scorecards, containerized workers, remote GPU backends, authentication, and production observability.
+
+
+## v0.3 — QLoRA, telemetry, and adapter registry
+
+Studio now supports two parameter-efficient adaptation modes:
+
+- LoRA — standard base-model loading plus low-rank adapters.
+- QLoRA — 4-bit NF4 base-model loading with double quantization and LoRA adapters.
+
+QLoRA requires the optional dependency:
+
+    pip install -e ".[qlora]"
+
+Training emits an append-only telemetry.jsonl artifact containing step, epoch, elapsed time, loss, learning rate, gradient norm, and CUDA allocation/reservation when available.
+
+Successful runs also register the produced adapter with:
+
+- adapter ID
+- parent model
+- LoRA configuration
+- LoRA vs QLoRA method
+- adapter path and size
+- trainable parameter counts
+- creation timestamp
+
+The Studio Runs tab can render loss and GPU-memory curves from telemetry. The Adapters tab exposes the reusable adapter inventory.
