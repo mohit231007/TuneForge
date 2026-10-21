@@ -21,6 +21,33 @@ The reference experiment uses:
 
 > TuneForge is an independent portfolio project built from first principles around a reproducible PEFT workflow. It is not a wrapper around the original course notebook.
 
+## TuneForge Studio
+
+TuneForge now includes a self-service Studio layer for creating LLM adaptation experiments from a web UI.
+
+Studio users can:
+
+- select a Hugging Face base model
+- use a Hugging Face dataset or upload CSV/JSON/JSONL instruction data
+- map instruction/context/response fields
+- configure LoRA rank, alpha, dropout, and target modules
+- configure batch size, gradient accumulation, epochs, learning rate, sequence length, and seed
+- inspect the generated experiment configuration before execution
+- detect host GPU capability and recommended precision
+- persist experiment runs with unique IDs
+- launch the real training engine when CUDA is available
+- review base-vs-adapted evidence after evaluation
+
+Run the API:
+
+    uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+Then run the Studio UI:
+
+    streamlit run app/app.py
+
+See docs/STUDIO.md for the execution model and current scope.
+
 ## What TuneForge includes
 
 - Deterministic dataset preparation with a fixed seed
