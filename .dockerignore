@@ -11,3 +11,5 @@ adapter_registry
 *.bin
 *.pt
 job_queue
+web/node_modules
+web/.next
