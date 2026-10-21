@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import os
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from api.security import require_access
@@ -13,7 +15,7 @@ from tuneforge.adapter_registry import (
 )
 from tuneforge.compare import compare_adapters, compare_runs
 from tuneforge.eval_rules import evaluate_response
-from tuneforge.queue import queue_snapshot
+from tuneforge.execution_backend import get_execution_backend
 from tuneforge.studio import (
     cancel_run,
     create_run,
@@ -35,6 +37,24 @@ app = FastAPI(
     ),
 )
 
+
+
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "TUNEFORGE_ALLOWED_ORIGINS",
+        "http://localhost:3000,http://localhost:8501",
+    ).split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class ExperimentRequest(BaseModel):
     config: dict
@@ -80,10 +100,14 @@ def capabilities(workspace_id: str = Depends(require_access)) -> dict:
 
 @app.get("/queue")
 def queue(workspace_id: str = Depends(require_access)) -> dict:
+    snapshot = get_execution_backend().snapshot()
     return {
-        **queue_snapshot(),
+        **snapshot,
         "workspace_id": workspace_id,
-        "note": "Queue counts are host-wide in the local filesystem backend.",
+        "note": (
+            "Queue counts may be host-wide depending on the configured "
+            "execution backend."
+        ),
     }
 
 
