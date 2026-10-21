@@ -30,12 +30,15 @@ Studio users can:
 - select a Hugging Face base model
 - use a Hugging Face dataset or upload CSV/JSON/JSONL instruction data
 - map instruction/context/response fields
+- choose LoRA or 4-bit QLoRA
 - configure LoRA rank, alpha, dropout, and target modules
 - configure batch size, gradient accumulation, epochs, learning rate, sequence length, and seed
 - inspect the generated experiment configuration before execution
 - detect host GPU capability and recommended precision
 - persist experiment runs with unique IDs
 - launch the real training engine when CUDA is available
+- inspect live run telemetry including loss and GPU memory
+- manage versioned adapters in the adapter registry
 - review base-vs-adapted evidence after evaluation
 
 Run the API:
