@@ -21,3 +21,23 @@ def require_access(
         raise HTTPException(status_code=422, detail="Invalid workspace identifier.")
 
     return x_tuneforge_workspace
+
+
+def read_only_mode() -> bool:
+    return os.getenv("TUNEFORGE_READ_ONLY", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def require_write_access() -> None:
+    if read_only_mode():
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "This TuneForge deployment is read-only. "
+                "Self-host TuneForge with a GPU worker to launch experiments."
+            ),
+        )

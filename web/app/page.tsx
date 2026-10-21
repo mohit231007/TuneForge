@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import MetricCard from "@/components/MetricCard";
 import StatusPill from "@/components/StatusPill";
+import { experiment001 } from "@/lib/experiment001";
 
 type Run = {run_id:string;status:string;worker_id?:string;updated_at:string;message?:string};
 type Adapter = {adapter_id:string;model_name:string;lifecycle?:string;quantization_mode?:string;size_bytes?:number;parameters?:{trainable_percentage?:number}};
@@ -40,6 +41,27 @@ export default function Overview(){
     </div>
 
     {error&&<div className="error">{error}</div>}
+
+    <section className="card panel" style={{marginBottom:18}}>
+      <div className="toolbar">
+        <div>
+          <div className="eyebrow">Verified Experiment 001</div>
+          <h2 style={{marginTop:6}}>TinyLlama + Dolly LoRA on NVIDIA T4</h2>
+        </div>
+        <span className="status status-completed">measured</span>
+      </div>
+      <div className="metrics">
+        <MetricCard label="Trainable fraction" value={`${experiment001.trainablePercentage.toFixed(6)}%`} note="1,126,400 parameters"/>
+        <MetricCard label="Final training loss" value={experiment001.finalTrainingLoss.toFixed(4)} note="63 global steps"/>
+        <MetricCard label="Adapter size" value={`${experiment001.adapterSizeMiB.toFixed(2)} MiB`} note="adapter-only artifact"/>
+        <MetricCard label="Peak reserved GPU" value={`${experiment001.peakReservedGpuGiB.toFixed(2)} GiB`} note="Tesla T4 · FP16"/>
+      </div>
+      <p className="muted">
+        The exact same two deterministic prompts were used before and after adaptation.
+        In this narrow check, the adapted model followed both requested output formats more closely.
+        This is evidence of instruction-format adherence for the reference run, not a broad quality benchmark.
+      </p>
+    </section>
 
     <div className="metrics">
       <MetricCard label="Experiments" value={runs.length} note="workspace scoped"/>

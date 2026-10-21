@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tuneforge-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: TUNEFORGE_READ_ONLY
+        value: "true"
+      - key: TUNEFORGE_EXECUTION_BACKEND
+        value: local
+      - key: TUNEFORGE_ALLOWED_ORIGINS
+        sync: false

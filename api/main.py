@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from api.security import require_access
+from api.security import read_only_mode, require_access, require_write_access
 from tuneforge.adapter_registry import (
     get_adapter,
     list_adapters,
@@ -95,6 +95,7 @@ def capabilities(workspace_id: str = Depends(require_access)) -> dict:
     return {
         **hardware_capabilities(),
         "workspace_id": workspace_id,
+        "read_only": read_only_mode(),
     }
 
 
@@ -129,6 +130,7 @@ def create_experiment(
     request: ExperimentRequest,
     workspace_id: str = Depends(require_access),
 ) -> dict:
+    require_write_access()
     try:
         run = create_run(
             request.config,
@@ -167,6 +169,7 @@ def cancel_experiment(
     run_id: str,
     workspace_id: str = Depends(require_access),
 ) -> dict:
+    require_write_access()
     try:
         _run_for_workspace(run_id, workspace_id)
         return asdict(cancel_run(run_id))
@@ -181,6 +184,7 @@ def retry_experiment(
     run_id: str,
     workspace_id: str = Depends(require_access),
 ) -> dict:
+    require_write_access()
     try:
         _run_for_workspace(run_id, workspace_id)
         return asdict(retry_run(run_id))
@@ -247,6 +251,7 @@ def adapter_transition(
     request: AdapterTransitionRequest,
     workspace_id: str = Depends(require_access),
 ) -> dict:
+    require_write_access()
     try:
         _adapter_for_workspace(adapter_id, workspace_id)
         return transition_adapter(

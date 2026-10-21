@@ -1,0 +1,15 @@
+export const experiment001 = {
+  commit: "a9637758949925ea6eb2a4d2fc46e4ad87636319",
+  gpu: "NVIDIA Tesla T4",
+  computeCapability: "7.5",
+  precision: "FP16",
+  trainableParameters: 1126400,
+  totalParameters: 1101174784,
+  trainablePercentage: 0.10229075496156657,
+  finalTrainingLoss: 1.831209243290008,
+  adapterSizeMiB: 7.765937805175781,
+  globalSteps: 63,
+  peakReservedGpuGiB: 3.0898,
+  promptIdentityPreserved: true,
+  evidencePath: "/docs/evidence/EXPERIMENT_001_EVIDENCE.md",
+} as const;
