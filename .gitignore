@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+artifacts/
+studio_runs/
+studio_uploads/
+adapter_registry/
+job_queue/
+*.safetensors
+*.bin
+*.pt
+.env
+.DS_Store

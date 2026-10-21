@@ -1,0 +1,51 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./studio_runs:/app/studio_runs
+      - ./adapter_registry:/app/adapter_registry
+      - ./studio_uploads:/app/studio_uploads
+      - ./job_queue:/app/job_queue
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_TUNEFORGE_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.studio
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      TUNEFORGE_API_URL: http://api:8000
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: ["python", "-m", "tuneforge.worker", "--poll-seconds", "3"]
+    profiles: ["gpu-worker"]
+    volumes:
+      - ./studio_runs:/app/studio_runs
+      - ./adapter_registry:/app/adapter_registry
+      - ./studio_uploads:/app/studio_uploads
+      - ./job_queue:/app/job_queue
+    # Production GPU hosts should enable the NVIDIA container runtime.
+    # This service is profile-gated so CPU-only docker compose does not
+    # accidentally claim GPU training jobs.
