@@ -2,8 +2,6 @@
 
 **Release status:** READY
 
-**Release commit baseline:** `7469c7edfa3af807332224727ee358bb92418dc5`
-
 ## Live services
 
 - Web: https://tuneforge-algosphere1.vercel.app
@@ -52,68 +50,22 @@ Measured on NVIDIA Tesla T4:
 
 The two-prompt comparison is reported only as narrow instruction-format adherence, not a general model-quality benchmark.
 
-## Public security model
+## Security
 
-The public portfolio deployment is intentionally read-only.
+A dedicated pre-launch security review was completed for the public deployment.
 
-- public API accepts legitimate GET/HEAD/OPTIONS traffic only
-- unsafe HTTP methods are denied at the Vercel edge and in FastAPI middleware
-- deterministic evaluation executes locally in the browser
-- no public GPU queue
-- no public model inference
-- no database
-- no private training dataset or model weights
-- no public file upload
-- no application credentials in the browser
-- API CORS restricted to the production frontend origin
-- GET responses are edge-cacheable
-- security headers applied to web and API
-- Vercel edge DDoS/WAF protections remain in front of both services
+Detailed defensive controls, thresholds, and operational procedures are intentionally not published.
 
-## Release verification
+## Verification
 
-All release gates passed on the hardened release:
-
-- Ruff — PASS
-- full Pytest — PASS
-- public API tests — PASS
-- public API pip-audit — PASS
-- npm production audit — PASS
-- Next.js production build — PASS
-- CodeQL Python — PASS
-- CodeQL JavaScript/TypeScript — PASS
-- Vercel API production deployment — READY
-- Vercel web production deployment — READY
-- Incognito browser walkthrough — PASS
-- obvious committed credential-pattern scan — no matches found
-
-## Maintenance controls
-
-- Dependabot: enabled for Python, npm and GitHub Actions
-- CodeQL: runs on main, pull requests and weekly schedule
-- security incident runbook included
-- Vercel Attack Challenge Mode documented as emergency containment
-- Instant Rollback documented for application regressions
+The release passed the project's automated quality, dependency, security-analysis, build, deployment, and human browser-review gates.
 
 ## Deliberate boundaries
 
 v1.0.0 is a **public portfolio/recruiter demo plus self-hostable engineering reference**, not a hosted multi-tenant GPU training SaaS.
 
-A future externally writable/GPU-backed service must add:
-
-- strong identity/RBAC
-- tenant isolation
-- durable audit logs
-- authenticated job submission
-- per-user quotas/budgets
-- worker-network isolation
-- secure object storage
-- upload scanning
-- stronger cost/abuse controls
-- production-safe running-job cancellation
-
 ## Release decision
 
 No known blocker remains for the public portfolio release.
 
-Routine Dependabot upgrade pull requests are maintenance work and are not release blockers because the production dependency audits and CodeQL gates are currently green.
+Routine dependency-maintenance work continues after release and is not considered a release blocker when current release gates remain green.

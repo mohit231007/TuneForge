@@ -19,16 +19,14 @@ The current system includes:
 - LoRA and 4-bit QLoRA
 - Hugging Face and custom instruction datasets
 - GPU-aware FP16/BF16 execution
-- FastAPI experiment control plane
-- queued CUDA workers
-- loss and GPU-memory telemetry
+- experiment orchestration and telemetry
 - deterministic base-vs-adapted evaluation
 - run and adapter comparison
 - versioned adapter registry
 - candidate → validated → production → archived lifecycle
 - Next.js public product UI
 - Dockerized service boundaries
-- Python + frontend CI
+- CI and automated quality checks
 
 The measured Experiment 001 trained **1,126,400 parameters out of 1,101,174,784 total — 0.1022908%**.
 

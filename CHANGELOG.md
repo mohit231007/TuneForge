@@ -24,12 +24,8 @@
 
 ### Security
 
-- removed all legitimate public write/compute API operations
-- moved public deterministic evaluation into the browser
-- denied unsafe methods at both Vercel edge and API middleware
-- upgraded Next.js to resolve the high-severity PostCSS advisory found by pre-launch audit
-- restricted production CORS to the exact TuneForge web origin
-- added edge caching for public GET responses
+- completed a dedicated pre-launch security review
+- minimized public exposure of security implementation details
 
 ### Verified
 
