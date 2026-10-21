@@ -144,6 +144,7 @@ def main() -> None:
 
     adapter_record = register_adapter(
         {
+            "workspace_id": config.workspace_id,
             "model_name": config.model_name,
             "adapter_path": str(adapter_dir),
             "size_bytes": adapter_size,
