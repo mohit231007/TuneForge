@@ -11,7 +11,7 @@ import torch
 from trl import SFTConfig, SFTTrainer
 
 from tuneforge.config import load_config
-from tuneforge.data import prepare_dolly_dataset
+from tuneforge.data import prepare_dataset
 from tuneforge.modeling import (
     build_lora_config,
     load_base_model,
