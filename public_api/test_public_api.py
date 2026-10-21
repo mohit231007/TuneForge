@@ -30,8 +30,8 @@ def test_capabilities_are_read_only():
 
 
 def test_every_write_method_is_blocked():
-    for method in ["post", "put", "patch", "delete"]:
-        response = getattr(client, method)("/evaluation/rules", json={})
+    for method in ["POST", "PUT", "PATCH", "DELETE"]:
+        response = client.request(method, "/evaluation/rules", json={})
         assert response.status_code == 403
 
 
