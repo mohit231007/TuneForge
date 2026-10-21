@@ -17,3 +17,12 @@ Public endpoints:
 Mutation endpoints return HTTP 403.
 
 The full self-service API remains under `api/`.
+
+
+## Deployment
+
+Vercel project root: `public_api`
+
+Production branch: `main`
+
+This read-only public API is intentionally isolated from the full TuneForge ML training stack.
