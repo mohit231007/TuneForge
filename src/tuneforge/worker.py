@@ -78,6 +78,16 @@ def main() -> None:
     args = parse_args()
     worker_id = args.worker_id or f"{socket.gethostname()}-{os.getpid()}"
 
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            raise SystemExit(
+                "TuneForge worker requires a CUDA-capable host. "
+                "No job was claimed."
+            )
+    except ImportError as exc:
+        raise SystemExit("PyTorch is required by the TuneForge worker.") from exc
+
     while True:
         job = claim_next_job(worker_id)
 
