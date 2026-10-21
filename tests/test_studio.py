@@ -6,6 +6,7 @@ def valid_payload():
         "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         "dataset_name": "databricks/databricks-dolly-15k",
         "dataset": {"source": "huggingface", "path": None},
+        "quantization": {"mode": "none"},
         "seed": 42,
         "num_train_samples": 1000,
         "max_seq_length": 512,
@@ -24,6 +25,22 @@ def valid_payload():
 
 def test_valid_experiment_has_no_errors():
     assert validate_experiment(valid_payload()) == []
+
+
+def test_qlora_mode_is_valid():
+    payload = valid_payload()
+    payload["quantization"]["mode"] = "4bit"
+
+    assert validate_experiment(payload) == []
+
+
+def test_unknown_quantization_mode_is_rejected():
+    payload = valid_payload()
+    payload["quantization"]["mode"] = "8bit"
+
+    errors = validate_experiment(payload)
+
+    assert "quantization.mode must be either 'none' or '4bit'." in errors
 
 
 def test_local_dataset_requires_path():
