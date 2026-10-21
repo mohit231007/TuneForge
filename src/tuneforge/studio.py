@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -11,8 +9,13 @@ from pathlib import Path
 import torch
 import yaml
 
+from tuneforge.queue import cancel_pending_job, enqueue_job, retry_job
+
 REGISTRY_DIR = Path("studio_runs")
 REGISTRY_DIR.mkdir(exist_ok=True)
+
+TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
+RUN_STATUSES = {"ready", "queued", "running", "completed", "failed", "cancelled"}
 
 
 @dataclass
@@ -21,7 +24,8 @@ class StudioRun:
     status: str
     config_path: str
     created_at: str
-    pid: int | None = None
+    updated_at: str
+    worker_id: str | None = None
     message: str | None = None
 
 
@@ -95,73 +99,117 @@ def create_run(payload: dict, launch: bool = False) -> StudioRun:
     payload["output_dir"] = str(run_dir / "artifacts")
 
     config_path = run_dir / "experiment.yaml"
-    config_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    config_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
 
+    now = datetime.now(timezone.utc).isoformat()
     status = "ready"
-    pid = None
     message = "Experiment created."
 
     if launch:
-        hardware = hardware_capabilities()
-
-        if not hardware["can_train"]:
-            status = "blocked"
-            message = (
-                "No CUDA GPU detected on the TuneForge host; "
-                "the config was saved but training was not launched."
-            )
-        else:
-            log_handle = (run_dir / "train.log").open("w", encoding="utf-8")
-            process = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "tuneforge.train",
-                    "--config",
-                    str(config_path),
-                ],
-                stdout=log_handle,
-                stderr=subprocess.STDOUT,
-            )
-            status = "running"
-            pid = process.pid
-            message = "Training process launched."
+        enqueue_job(run_id, str(config_path))
+        status = "queued"
+        message = "Experiment queued for a TuneForge worker."
 
     run = StudioRun(
         run_id=run_id,
         status=status,
         config_path=str(config_path),
-        created_at=datetime.now(timezone.utc).isoformat(),
-        pid=pid,
+        created_at=now,
+        updated_at=now,
+        worker_id=None,
         message=message,
     )
     _save_run(run)
     return run
 
 
+def _run_path(run_id: str) -> Path:
+    return REGISTRY_DIR / run_id / "run.json"
+
+
 def _save_run(run: StudioRun) -> None:
-    path = REGISTRY_DIR / run.run_id / "run.json"
-    path.write_text(json.dumps(asdict(run), indent=2), encoding="utf-8")
+    _run_path(run.run_id).write_text(
+        json.dumps(asdict(run), indent=2),
+        encoding="utf-8",
+    )
 
 
 def get_run(run_id: str) -> StudioRun:
-    path = REGISTRY_DIR / run_id / "run.json"
+    path = _run_path(run_id)
 
     if not path.exists():
         raise FileNotFoundError(run_id)
 
     data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("updated_at", data.get("created_at"))
+    data.setdefault("worker_id", None)
+    data.pop("pid", None)
+
     run = StudioRun(**data)
 
-    if run.status == "running":
-        artifact_metadata = REGISTRY_DIR / run_id / "artifacts" / "run_metadata.json"
-
-        if artifact_metadata.exists():
-            run.status = "completed"
-            run.message = "Training completed and metadata was generated."
-            _save_run(run)
+    artifact_metadata = REGISTRY_DIR / run_id / "artifacts" / "run_metadata.json"
+    if run.status == "running" and artifact_metadata.exists():
+        run.status = "completed"
+        run.message = "Training completed and metadata was generated."
+        run.updated_at = datetime.now(timezone.utc).isoformat()
+        _save_run(run)
 
     return run
+
+
+def set_run_status(
+    run_id: str,
+    status: str,
+    message: str,
+    worker_id: str | None = None,
+) -> StudioRun:
+    if status not in RUN_STATUSES:
+        raise ValueError(f"Unsupported run status: {status}")
+
+    run = get_run(run_id)
+    run.status = status
+    run.message = message
+    run.updated_at = datetime.now(timezone.utc).isoformat()
+
+    if worker_id is not None:
+        run.worker_id = worker_id
+
+    _save_run(run)
+    return run
+
+
+def cancel_run(run_id: str) -> StudioRun:
+    run = get_run(run_id)
+
+    if run.status in TERMINAL_STATUSES:
+        raise ValueError(f"Cannot cancel a {run.status} run.")
+
+    if run.status == "running":
+        raise ValueError(
+            "Running jobs require worker-level cancellation; "
+            "this version only cancels queued/ready jobs safely."
+        )
+
+    cancel_pending_job(run_id)
+    return set_run_status(run_id, "cancelled", "Run cancelled before execution.")
+
+
+def retry_run(run_id: str) -> StudioRun:
+    run = get_run(run_id)
+
+    if run.status not in {"failed", "cancelled"}:
+        raise ValueError("Only failed or cancelled runs can be retried.")
+
+    retry_job(run_id, run.config_path)
+    return set_run_status(
+        run_id,
+        "queued",
+        "Run re-queued for another worker attempt.",
+        worker_id=None,
+    )
 
 
 def list_runs() -> list[StudioRun]:
@@ -203,5 +251,9 @@ def read_training_log(run_id: str, max_lines: int = 200) -> list[str]:
     if not path.exists():
         return []
 
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    lines = path.read_text(
+        encoding="utf-8",
+        errors="replace",
+    ).splitlines()
+
     return lines[-max_lines:]
