@@ -21,6 +21,7 @@ RUN_STATUSES = {"ready", "queued", "running", "completed", "failed", "cancelled"
 @dataclass
 class StudioRun:
     run_id: str
+    workspace_id: str
     status: str
     config_path: str
     created_at: str
@@ -86,7 +87,11 @@ def validate_experiment(payload: dict) -> list[str]:
     return errors
 
 
-def create_run(payload: dict, launch: bool = False) -> StudioRun:
+def create_run(
+    payload: dict,
+    launch: bool = False,
+    workspace_id: str = "default",
+) -> StudioRun:
     errors = validate_experiment(payload)
     if errors:
         raise ValueError(" ".join(errors))
@@ -96,6 +101,7 @@ def create_run(payload: dict, launch: bool = False) -> StudioRun:
     run_dir.mkdir(parents=True, exist_ok=False)
 
     payload = dict(payload)
+    payload["workspace_id"] = workspace_id
     payload["output_dir"] = str(run_dir / "artifacts")
 
     config_path = run_dir / "experiment.yaml"
@@ -115,6 +121,7 @@ def create_run(payload: dict, launch: bool = False) -> StudioRun:
 
     run = StudioRun(
         run_id=run_id,
+        workspace_id=workspace_id,
         status=status,
         config_path=str(config_path),
         created_at=now,
@@ -144,6 +151,7 @@ def get_run(run_id: str) -> StudioRun:
         raise FileNotFoundError(run_id)
 
     data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("workspace_id", "default")
     data.setdefault("updated_at", data.get("created_at"))
     data.setdefault("worker_id", None)
     data.pop("pid", None)
@@ -212,12 +220,14 @@ def retry_run(run_id: str) -> StudioRun:
     )
 
 
-def list_runs() -> list[StudioRun]:
+def list_runs(workspace_id: str | None = None) -> list[StudioRun]:
     runs: list[StudioRun] = []
 
     for path in REGISTRY_DIR.glob("TF-*/run.json"):
         try:
-            runs.append(get_run(path.parent.name))
+            run = get_run(path.parent.name)
+            if workspace_id is None or run.workspace_id == workspace_id:
+                runs.append(run)
         except Exception:
             continue
 
