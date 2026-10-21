@@ -307,3 +307,21 @@ A remote worker/scheduler can be connected through the webhook backend:
 This keeps the product independent of any specific GPU vendor while preserving the same Studio/API contract.
 
 See `docs/PUBLIC_DEMO.md` for launch positioning and claim discipline.
+
+
+## Public security posture
+
+The live portfolio demo is intentionally read-only.
+
+- no public GPU queue
+- no public model inference
+- no database or private dataset
+- no legitimate write methods on the public API
+- deterministic evaluation runs locally in the browser
+- GET responses are edge-cacheable
+- unsafe methods are denied at the Vercel edge and again in FastAPI
+- security headers are applied to the API and Next.js frontend
+- Vercel provides platform DDoS protection / WAF at the edge
+- CodeQL, Dependabot, npm audit, and pip-audit are part of the repository security controls
+
+See [Pre-Launch Security Posture](docs/PRELAUNCH_SECURITY.md) and [Security Incident Runbook](docs/SECURITY_INCIDENT_RUNBOOK.md).
