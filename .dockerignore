@@ -10,3 +10,4 @@ adapter_registry
 *.safetensors
 *.bin
 *.pt
+job_queue
