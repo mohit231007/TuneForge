@@ -1,0 +1,11 @@
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir ".[qlora]"
+
+CMD ["python", "-m", "tuneforge.worker", "--poll-seconds", "3"]
