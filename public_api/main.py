@@ -3,13 +3,14 @@ from __future__ import annotations
 import os
 import re
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI(
     title="TuneForge Public Demo API",
-    version="1.0.0",
+    version="1.1.0",
     description="Read-only public API for the TuneForge recruiter-facing demo.",
 )
 
@@ -26,16 +27,58 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-TuneForge-Workspace"],
 )
 
 WORKSPACE_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+MAX_CONTENT_LENGTH = 16 * 1024
+
+
+class EvaluationRules(BaseModel):
+    min_words: int | None = Field(default=None, ge=0, le=2000)
+    max_words: int | None = Field(default=None, ge=0, le=2000)
+    contains: list[str] = Field(default_factory=list, max_length=10)
+    not_contains: list[str] = Field(default_factory=list, max_length=10)
 
 
 class EvaluationRequest(BaseModel):
-    response: str
-    rules: dict = Field(default_factory=dict)
+    response: str = Field(min_length=1, max_length=8000)
+    rules: EvaluationRules = Field(default_factory=EvaluationRules)
+
+
+@app.middleware("http")
+async def hardening_headers(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+
+    if request.method in {"POST", "PUT", "PATCH"} and content_length:
+        try:
+            if int(content_length) > MAX_CONTENT_LENGTH:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "Request body too large."},
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid Content-Length header."},
+            )
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=(), payment=()"
+    )
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    )
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 def workspace(
@@ -56,12 +99,12 @@ def _readonly() -> None:
     )
 
 
-def _evaluate_response(response: str, rules: dict) -> dict:
+def _evaluate_response(response: str, rules: EvaluationRules) -> dict:
     checks = []
     words = response.split()
 
-    if "min_words" in rules:
-        target = int(rules["min_words"])
+    if rules.min_words is not None:
+        target = rules.min_words
         checks.append({
             "name": "min_words",
             "passed": len(words) >= target,
@@ -69,8 +112,8 @@ def _evaluate_response(response: str, rules: dict) -> dict:
             "expected": target,
         })
 
-    if "max_words" in rules:
-        target = int(rules["max_words"])
+    if rules.max_words is not None:
+        target = rules.max_words
         checks.append({
             "name": "max_words",
             "passed": len(words) <= target,
@@ -78,19 +121,21 @@ def _evaluate_response(response: str, rules: dict) -> dict:
             "expected": target,
         })
 
-    for needle in rules.get("contains", []):
-        present = needle.lower() in response.lower()
+    for needle in rules.contains:
+        bounded = needle[:100]
+        present = bounded.lower() in response.lower()
         checks.append({
-            "name": f"contains:{needle}",
+            "name": f"contains:{bounded}",
             "passed": present,
             "observed": present,
             "expected": True,
         })
 
-    for needle in rules.get("not_contains", []):
-        absent = needle.lower() not in response.lower()
+    for needle in rules.not_contains:
+        bounded = needle[:100]
+        absent = bounded.lower() not in response.lower()
         checks.append({
-            "name": f"not_contains:{needle}",
+            "name": f"not_contains:{bounded}",
             "passed": absent,
             "observed": absent,
             "expected": True,
