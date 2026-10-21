@@ -29,9 +29,19 @@ class TrainingSettings:
 
 
 @dataclass(frozen=True)
+class DatasetSettings:
+    source: str
+    path: str | None
+    instruction_field: str
+    context_field: str
+    response_field: str
+
+
+@dataclass(frozen=True)
 class ExperimentConfig:
     model_name: str
     dataset_name: str
+    dataset: DatasetSettings
     seed: int
     num_train_samples: int
     max_seq_length: int
@@ -46,9 +56,20 @@ def load_config(path: str | Path) -> ExperimentConfig:
     with Path(path).open("r", encoding="utf-8") as handle:
         raw = yaml.safe_load(handle)
 
+    dataset_raw = raw.get("dataset", {})
+    source = str(dataset_raw.get("source", "huggingface"))
+    dataset_name = str(raw.get("dataset_name", dataset_raw.get("name", "")))
+
     return ExperimentConfig(
         model_name=raw["model_name"],
-        dataset_name=raw["dataset_name"],
+        dataset_name=dataset_name,
+        dataset=DatasetSettings(
+            source=source,
+            path=dataset_raw.get("path"),
+            instruction_field=str(dataset_raw.get("instruction_field", "instruction")),
+            context_field=str(dataset_raw.get("context_field", "context")),
+            response_field=str(dataset_raw.get("response_field", "response")),
+        ),
         seed=int(raw["seed"]),
         num_train_samples=int(raw["num_train_samples"]),
         max_seq_length=int(raw["max_seq_length"]),
