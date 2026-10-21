@@ -2,116 +2,87 @@
 
 TuneForge's public portfolio deployment is intentionally **read-only**.
 
-The public site demonstrates the product, measured Experiment 001 evidence, comparison surfaces, and architecture without exposing unauthenticated GPU-training or adapter-promotion actions.
+## Live production
 
-## Recommended topology
+- **Web:** https://tuneforge-algosphere1.vercel.app
+- **API:** https://tuneforge-public-api.vercel.app
+- **Repository:** https://github.com/mohit231007/TuneForge
 
-- **Web:** Vercel, Root Directory = `web`
-- **API:** Render Blueprint from `render.yaml`
-- **GPU workers:** not attached to the public read-only demo
+Both services are deployed on Vercel from the same GitHub repository.
 
-This separation keeps the public portfolio deployment lightweight and safe while preserving the self-hosted/full-worker architecture in the repository.
+## Production topology
 
-## 1. Deploy the API on Render
+### Web
 
-The repository includes `render.yaml`.
-
-Create a Blueprint from the TuneForge repository.
-
-The Blueprint creates:
-
-- service name: `tuneforge-api`
-- runtime: Docker
-- Dockerfile: `Dockerfile.api`
-- plan: free
-- region: Singapore
-- health check: `/health`
-- `TUNEFORGE_READ_ONLY=true`
-- `TUNEFORGE_EXECUTION_BACKEND=local`
-
-During Blueprint creation, provide:
-
-`TUNEFORGE_ALLOWED_ORIGINS`
-
-After the frontend is deployed, set this to the exact Vercel production origin, for example:
-
-```text
-https://your-tuneforge-project.vercel.app
-```
-
-Render's Blueprint/Docker support allows environment variables to be provided to Docker services; secrets should not be committed into the YAML.
-
-## 2. Deploy the Next.js web app on Vercel
-
-Import the same GitHub repository as a Vercel project.
-
-Set:
-
+- Vercel project: `tuneforge`
 - Framework: Next.js
 - Root Directory: `web`
-- Build Command: default
-- Output Directory: default
+- Production branch: `main`
+- Public authentication protection: disabled
+- API environment:
+  `NEXT_PUBLIC_TUNEFORGE_API_URL=https://tuneforge-public-api.vercel.app`
 
-Add:
+### Public API
 
-```text
-NEXT_PUBLIC_TUNEFORGE_API_URL=https://<your-render-api>.onrender.com
-```
+- Vercel project: `tuneforge-public-api`
+- Framework: FastAPI
+- Root Directory: `public_api`
+- Production branch: `main`
+- Public authentication protection: disabled
+- CORS:
+  `TUNEFORGE_ALLOWED_ORIGINS=https://tuneforge-algosphere1.vercel.app`
 
-Then deploy/redeploy.
+The public API deliberately excludes PyTorch, Transformers, PEFT, TRL, and GPU-worker dependencies. It is a lightweight read-only portfolio API.
 
-`NEXT_PUBLIC_*` values are compiled into the client bundle, so never put secrets in them.
+## Public behavior
 
-## 3. Verify
+The public deployment exposes:
 
-Public API:
+- verified Experiment 001 metrics
+- read-only capabilities
+- empty live experiment/adapter state on a fresh deployment
+- deterministic response-rule evaluation
+- architecture and product surfaces
 
-```bash
-curl https://<your-render-api>.onrender.com/health
-```
+Mutation endpoints intentionally return HTTP 403.
 
-Expected:
-
-```json
-{"status":"ok","service":"tuneforge-studio"}
-```
-
-Then confirm the frontend:
-
-- renders Verified Experiment 001 without API state
-- can read `/capabilities`, `/experiments`, `/adapters`, and `/queue`
-- shows public demo read-only messaging in the experiment builder
-- receives HTTP 403 for experiment creation in read-only mode
-
-## 4. Public demo behavior
-
-The public dashboard always shows the verified Experiment 001 measurements from the evidence report:
+The public dashboard always shows measured Experiment 001 evidence:
 
 - 1,126,400 trainable parameters
+- 1,101,174,784 total parameters
 - 0.1022908% trainable fraction
 - 1.831209 final training loss
 - 7.7659 MiB adapter
-- 3.0898 GiB peak reserved T4 GPU memory observed
+- 3.0898 GiB peak reserved Tesla T4 memory observed
 
-Live run and adapter lists can remain empty on a fresh public API. They represent current server-side workspace state, not fabricated demo records.
+## Why the public site is read-only
 
-## 5. Full self-service mode
+A public recruiter demo should not expose an unauthenticated GPU training queue.
 
-To allow actual fine-tuning:
+Full TuneForge self-service training remains available when self-hosted with:
 
-- run TuneForge outside read-only mode
-- attach a CUDA worker or remote execution backend
-- add real authentication/authorization
-- persist run/adapter state in durable infrastructure
-- do not expose an unauthenticated public GPU queue
+- a CUDA worker or remote execution backend
+- durable run/adapter persistence
+- real authentication and authorization
+- protected worker credentials
+- appropriate model/dataset governance
 
-## Launch gate
+## Deployment verification
 
-The deployment is public-launch-ready only after:
+Verified from Vercel:
 
-- Render API URL is live
-- Vercel web URL is live
-- CORS is verified
-- incognito/private-browser test passes
-- read-only mutation blocking is verified
-- screenshots are captured from the real live deployment
+- Next.js production deployment: READY
+- FastAPI production deployment: READY
+- frontend Vercel Authentication: disabled
+- API Vercel Authentication: disabled
+- API CORS restricted to the production frontend origin
+- repository CI: Ruff, Pytest, public API tests, and Next.js production build passing
+
+## Remaining human launch checks
+
+Before publishing broadly:
+
+- open the live frontend in an incognito/private browser
+- exercise the Evaluation page against the live API
+- confirm the Experiments page displays public read-only mode
+- capture final live screenshots for the LinkedIn carousel / README

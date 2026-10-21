@@ -40,6 +40,8 @@ The part I found most valuable was not simply making training run.
 
 It was engineering everything around the model so the result is reproducible, inspectable and governable.
 
+Live demo: https://tuneforge-algosphere1.vercel.app
+
 GitHub: https://github.com/mohit231007/TuneForge
 
 **TuneForge — A product by The Algosphere.**
@@ -56,4 +58,5 @@ Do not publish this post until:
 - [x] actual adapter size is recorded
 - [x] actual loss history is recorded
 - [x] actual base-vs-adapted outputs are available
-- public UI has been deployed or screenshots are captured
+- [x] public UI deployed at https://tuneforge-algosphere1.vercel.app
+- [ ] final live screenshots captured for the launch carousel
