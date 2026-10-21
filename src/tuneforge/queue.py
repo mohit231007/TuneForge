@@ -87,7 +87,7 @@ def retry_job(run_id: str, config_path: str) -> dict[str, Any]:
                 previous_attempt = int(
                     json.loads(path.read_text(encoding="utf-8")).get("attempt", 0)
                 )
-            except Exception:
+            except (OSError, json.JSONDecodeError, TypeError, ValueError):
                 previous_attempt = 0
             path.unlink()
 
