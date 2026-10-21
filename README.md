@@ -196,3 +196,24 @@ The evaluation pipeline records the exact same prompts against the base and adap
 - repetition ratio
 
 These are descriptive runtime/output metrics, not standalone semantic-quality scores. TuneForge deliberately separates measurable evidence from subjective claims.
+
+
+## Queue and GPU workers
+
+TuneForge no longer requires the web API to execute GPU training directly.
+
+Launch requests are persisted as queued jobs. A dedicated CUDA worker claims a job, runs the training engine, writes logs/telemetry, and updates the run to completed or failed.
+
+    python -m tuneforge.worker
+
+The Studio exposes queue depth, run status, worker identity, safe pre-execution cancellation, and retry for failed/cancelled runs.
+
+## Adapter lifecycle
+
+Every successful adapter starts as a candidate and can be promoted through an explicit lifecycle:
+
+    candidate -> validated -> production -> archived
+
+Adapters can also be archived before production. Every transition records a timestamp and reason.
+
+See docs/ORCHESTRATION.md for the current local implementation and the intended production evolution.
