@@ -3,13 +3,13 @@ from __future__ import annotations
 import os
 import re
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
 
 app = FastAPI(
     title="TuneForge Public Demo API",
-    version="1.0.0",
+    version="1.2.0",
     description="Read-only public API for the TuneForge recruiter-facing demo.",
 )
 
@@ -26,16 +26,49 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["Content-Type", "X-TuneForge-Workspace"],
 )
 
 WORKSPACE_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 
-class EvaluationRequest(BaseModel):
-    response: str
-    rules: dict = Field(default_factory=dict)
+@app.middleware("http")
+async def public_api_hardening(request: Request, call_next):
+    if request.method not in SAFE_METHODS:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": (
+                    "The public TuneForge API is read-only. "
+                    "Self-host TuneForge to use mutation endpoints."
+                )
+            },
+        )
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=(), payment=()"
+    )
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    )
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+
+    if request.method in {"GET", "HEAD"}:
+        response.headers["Cache-Control"] = (
+            "public, max-age=60, s-maxage=300, stale-while-revalidate=86400"
+        )
+    else:
+        response.headers["Cache-Control"] = "no-store"
+
+    return response
 
 
 def workspace(
@@ -44,64 +77,6 @@ def workspace(
     if not WORKSPACE_PATTERN.fullmatch(x_tuneforge_workspace):
         raise HTTPException(status_code=422, detail="Invalid workspace identifier.")
     return x_tuneforge_workspace
-
-
-def _readonly() -> None:
-    raise HTTPException(
-        status_code=403,
-        detail=(
-            "This is the read-only public TuneForge demo. "
-            "Self-host TuneForge with a CUDA worker to launch experiments."
-        ),
-    )
-
-
-def _evaluate_response(response: str, rules: dict) -> dict:
-    checks = []
-    words = response.split()
-
-    if "min_words" in rules:
-        target = int(rules["min_words"])
-        checks.append({
-            "name": "min_words",
-            "passed": len(words) >= target,
-            "observed": len(words),
-            "expected": target,
-        })
-
-    if "max_words" in rules:
-        target = int(rules["max_words"])
-        checks.append({
-            "name": "max_words",
-            "passed": len(words) <= target,
-            "observed": len(words),
-            "expected": target,
-        })
-
-    for needle in rules.get("contains", []):
-        present = needle.lower() in response.lower()
-        checks.append({
-            "name": f"contains:{needle}",
-            "passed": present,
-            "observed": present,
-            "expected": True,
-        })
-
-    for needle in rules.get("not_contains", []):
-        absent = needle.lower() not in response.lower()
-        checks.append({
-            "name": f"not_contains:{needle}",
-            "passed": absent,
-            "observed": absent,
-            "expected": True,
-        })
-
-    return {
-        "passed": all(check["passed"] for check in checks) if checks else True,
-        "check_count": len(checks),
-        "passed_count": sum(1 for check in checks if check["passed"]),
-        "checks": checks,
-    }
 
 
 @app.get("/")
@@ -164,38 +139,3 @@ def adapters(
 ) -> list[dict]:
     workspace(x_tuneforge_workspace)
     return []
-
-
-@app.post("/experiments")
-def create_experiment() -> None:
-    _readonly()
-
-
-@app.post("/experiments/{run_id}/cancel")
-def cancel_experiment(run_id: str) -> None:
-    _ = run_id
-    _readonly()
-
-
-@app.post("/experiments/{run_id}/retry")
-def retry_experiment(run_id: str) -> None:
-    _ = run_id
-    _readonly()
-
-
-@app.post("/adapters/{adapter_id}/transition")
-def transition_adapter(adapter_id: str) -> None:
-    _ = adapter_id
-    _readonly()
-
-
-@app.post("/evaluation/rules")
-def evaluate_rules(
-    request: EvaluationRequest,
-    x_tuneforge_workspace: str = Header(default="default"),
-) -> dict:
-    workspace_id = workspace(x_tuneforge_workspace)
-    return {
-        "workspace_id": workspace_id,
-        "result": _evaluate_response(request.response, request.rules),
-    }

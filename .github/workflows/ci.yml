@@ -61,6 +61,9 @@ jobs:
       - name: Install web dependencies
         run: npm install
 
+      - name: Audit production npm dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Build Next.js app
         run: npm run build
 
@@ -82,7 +85,10 @@ jobs:
       - name: Install public API test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e . pytest httpx
+          pip install -e . pytest httpx pip-audit
+
+      - name: Audit public API Python dependencies
+        run: pip-audit
 
       - name: Test public API
         run: pytest -q
