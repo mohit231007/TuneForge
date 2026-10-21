@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./studio_runs:/app/studio_runs
+      - ./adapter_registry:/app/adapter_registry
+      - ./studio_uploads:/app/studio_uploads
+
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.studio
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      TUNEFORGE_API_URL: http://api:8000
+    volumes:
+      - ./artifacts:/app/artifacts
