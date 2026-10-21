@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -10,7 +11,10 @@ import yaml
 
 st.set_page_config(page_title="TuneForge Studio", page_icon="⚒️", layout="wide")
 
-API_URL = st.sidebar.text_input("TuneForge API", "http://localhost:8000")
+API_URL = st.sidebar.text_input(
+    "TuneForge API",
+    os.getenv("TUNEFORGE_API_URL", "http://localhost:8000"),
+)
 
 st.title("⚒️ TuneForge Studio")
 st.caption(
@@ -382,6 +386,37 @@ with tabs[3]:
             comparison_path.read_text(encoding="utf-8")
         )
 
+        scorecard = comparison_payload.get("scorecard", {})
+        baseline_average = scorecard.get("baseline_average", {})
+        adapted_average = scorecard.get("adapted_average", {})
+
+        if scorecard:
+            st.markdown("### Evaluation scorecard")
+            score_rows = []
+
+            for metric in [
+                "latency_seconds",
+                "generated_tokens",
+                "tokens_per_second",
+                "word_count",
+                "repetition_ratio",
+            ]:
+                score_rows.append(
+                    {
+                        "metric": metric,
+                        "baseline": baseline_average.get(metric),
+                        "adapted": adapted_average.get(metric),
+                    }
+                )
+
+            st.dataframe(
+                pd.DataFrame(score_rows),
+                use_container_width=True,
+            )
+            st.caption(
+                "These are descriptive runtime/output metrics, not a claim of semantic quality."
+            )
+
         for index, item in enumerate(
             comparison_payload.get("comparisons", []),
             start=1,
@@ -394,10 +429,14 @@ with tabs[3]:
             with left:
                 st.markdown("**Base model**")
                 st.write(item["baseline_response"])
+                if item.get("baseline_metrics"):
+                    st.json(item["baseline_metrics"])
 
             with right:
                 st.markdown("**Adapted model**")
                 st.write(item["adapted_response"])
+                if item.get("adapted_metrics"):
+                    st.json(item["adapted_metrics"])
 
 with tabs[4]:
     st.subheader("What TuneForge Studio demonstrates")
