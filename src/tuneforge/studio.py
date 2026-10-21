@@ -169,3 +169,34 @@ def list_runs() -> list[StudioRun]:
             continue
 
     return sorted(runs, key=lambda run: run.created_at, reverse=True)
+
+
+def read_telemetry(run_id: str) -> list[dict]:
+    path = REGISTRY_DIR / run_id / "artifacts" / "telemetry.jsonl"
+
+    if not path.exists():
+        return []
+
+    points: list[dict] = []
+
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                points.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    return points
+
+
+def read_training_log(run_id: str, max_lines: int = 200) -> list[str]:
+    path = REGISTRY_DIR / run_id / "train.log"
+
+    if not path.exists():
+        return []
+
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    return lines[-max_lines:]
