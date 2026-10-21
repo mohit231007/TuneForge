@@ -9,6 +9,7 @@ import {
   GitCompareArrows,
   Hammer,
   Layers3,
+  ShieldCheck,
   Settings2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,6 +20,7 @@ const nav = [
   {href: "/experiments", label: "Experiments", icon: Cpu},
   {href: "/adapters", label: "Adapters", icon: Layers3},
   {href: "/compare", label: "Compare", icon: GitCompareArrows},
+  {href: "/evaluation", label: "Evaluation", icon: ShieldCheck},
   {href: "/architecture", label: "Architecture", icon: Boxes},
 ];
 
