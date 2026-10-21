@@ -2,6 +2,8 @@
 
 **Parameter-efficient LLM adaptation, evaluation, and adapter packaging on commodity GPUs.**
 
+> **Release:** TuneForge v1.0.0 is release-ready. See [release record](docs/RELEASE_V1.0.0.md) and [changelog](CHANGELOG.md).
+
 ## Live Demo
 
 - **TuneForge Web:** https://tuneforge-algosphere1.vercel.app
