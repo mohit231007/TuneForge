@@ -5,7 +5,7 @@ import os
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.security import require_access
 from tuneforge.adapter_registry import (
@@ -68,7 +68,7 @@ class AdapterTransitionRequest(BaseModel):
 
 class ResponseEvaluationRequest(BaseModel):
     response: str
-    rules: dict = {}
+    rules: dict = Field(default_factory=dict)
 
 
 def _run_for_workspace(run_id: str, workspace_id: str):
