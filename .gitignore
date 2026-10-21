@@ -5,6 +5,8 @@ __pycache__/
 .ruff_cache/
 .ipynb_checkpoints/
 artifacts/
+studio_runs/
+studio_uploads/
 *.safetensors
 *.bin
 *.pt
