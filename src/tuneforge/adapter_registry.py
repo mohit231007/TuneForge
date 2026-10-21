@@ -49,12 +49,14 @@ def register_adapter(metadata: dict[str, Any]) -> dict[str, Any]:
     return record
 
 
-def list_adapters() -> list[dict[str, Any]]:
+def list_adapters(workspace_id: str | None = None) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
 
     for path in REGISTRY_DIR.glob("ADP-*.json"):
         try:
-            records.append(json.loads(path.read_text(encoding="utf-8")))
+            record = json.loads(path.read_text(encoding="utf-8"))
+            if workspace_id is None or record.get("workspace_id", "default") == workspace_id:
+                records.append(record)
         except Exception:
             continue
 
