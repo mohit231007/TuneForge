@@ -57,7 +57,7 @@ def list_adapters(workspace_id: str | None = None) -> list[dict[str, Any]]:
             record = json.loads(path.read_text(encoding="utf-8"))
             if workspace_id is None or record.get("workspace_id", "default") == workspace_id:
                 records.append(record)
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             continue
 
     return sorted(
