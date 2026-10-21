@@ -4,6 +4,9 @@ seed: 42
 num_train_samples: 1000
 max_seq_length: 512
 
+quantization:
+  mode: none
+
 lora:
   r: 8
   alpha: 16
