@@ -6,6 +6,22 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ruff
+        run: pip install "ruff>=0.8"
+
+      - name: Ruff
+        run: ruff check src tests app api
+
   test:
     runs-on: ubuntu-latest
 
@@ -17,17 +33,16 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install
+      - name: Install CPU PyTorch
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install project
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Ruff
-        run: ruff check src tests app api
-
       - name: Pytest
         run: pytest -q
-
 
   web-build:
     runs-on: ubuntu-latest
