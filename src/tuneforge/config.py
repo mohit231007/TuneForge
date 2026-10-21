@@ -38,10 +38,16 @@ class DatasetSettings:
 
 
 @dataclass(frozen=True)
+class QuantizationSettings:
+    mode: str
+
+
+@dataclass(frozen=True)
 class ExperimentConfig:
     model_name: str
     dataset_name: str
     dataset: DatasetSettings
+    quantization: QuantizationSettings
     seed: int
     num_train_samples: int
     max_seq_length: int
@@ -59,6 +65,7 @@ def load_config(path: str | Path) -> ExperimentConfig:
     dataset_raw = raw.get("dataset", {})
     source = str(dataset_raw.get("source", "huggingface"))
     dataset_name = str(raw.get("dataset_name", dataset_raw.get("name", "")))
+    quantization_raw = raw.get("quantization", {})
 
     return ExperimentConfig(
         model_name=raw["model_name"],
@@ -69,6 +76,9 @@ def load_config(path: str | Path) -> ExperimentConfig:
             instruction_field=str(dataset_raw.get("instruction_field", "instruction")),
             context_field=str(dataset_raw.get("context_field", "context")),
             response_field=str(dataset_raw.get("response_field", "response")),
+        ),
+        quantization=QuantizationSettings(
+            mode=str(quantization_raw.get("mode", "none")).lower(),
         ),
         seed=int(raw["seed"]),
         num_train_samples=int(raw["num_train_samples"]),
