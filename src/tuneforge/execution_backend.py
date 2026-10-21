@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 import requests
@@ -51,9 +52,13 @@ class WebhookBackend:
         return headers
 
     def submit(self, run_id: str, config_path: str) -> dict:
+        config_yaml = Path(config_path).read_text(encoding="utf-8")
         response = requests.post(
             f"{self.base_url.rstrip('/')}/jobs",
-            json={"run_id": run_id, "config_path": config_path},
+            json={
+                "run_id": run_id,
+                "config_yaml": config_yaml,
+            },
             headers=self._headers(),
             timeout=10,
         )
@@ -72,9 +77,10 @@ class WebhookBackend:
         return True
 
     def retry(self, run_id: str, config_path: str) -> dict:
+        config_yaml = Path(config_path).read_text(encoding="utf-8")
         response = requests.post(
             f"{self.base_url.rstrip('/')}/jobs/{run_id}/retry",
-            json={"config_path": config_path},
+            json={"config_yaml": config_yaml},
             headers=self._headers(),
             timeout=10,
         )
