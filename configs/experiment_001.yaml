@@ -1,0 +1,45 @@
+workspace_id: experiment-001
+model_name: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+dataset_name: databricks/databricks-dolly-15k
+seed: 42
+num_train_samples: 1000
+max_seq_length: 512
+
+dataset:
+  source: huggingface
+  path: null
+  instruction_field: instruction
+  context_field: context
+  response_field: response
+
+quantization:
+  mode: none
+
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - v_proj
+
+training:
+  learning_rate: 0.0002
+  epochs: 1
+  per_device_batch_size: 4
+  gradient_accumulation_steps: 4
+  weight_decay: 0.01
+  lr_scheduler_type: cosine
+  warmup_fraction: 0.03
+  gradient_checkpointing: true
+  logging_steps: 10
+
+generation:
+  max_new_tokens: 256
+  do_sample: false
+
+output_dir: artifacts/experiment-001
+
+evaluation_prompts:
+  - "Explain what a neural network is in 2-3 sentences."
+  - "What are three tips for better sleep?"
