@@ -74,6 +74,11 @@ def validate_experiment(payload: dict) -> list[str]:
     if dataset.get("source", "huggingface") == "local" and not dataset.get("path"):
         errors.append("Local dataset source requires a path.")
 
+    quantization = payload.get("quantization", {})
+    quantization_mode = str(quantization.get("mode", "none")).lower()
+    if quantization_mode not in {"none", "4bit"}:
+        errors.append("quantization.mode must be either 'none' or '4bit'.")
+
     return errors
 
 
