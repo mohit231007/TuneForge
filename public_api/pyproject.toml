@@ -8,3 +8,7 @@ dependencies = [
 
 [tool.vercel]
 entrypoint = "main:app"
+
+
+[tool.setuptools]
+py-modules = ["main"]
