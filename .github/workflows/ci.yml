@@ -23,7 +23,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Ruff
-        run: ruff check src tests app
+        run: ruff check src tests app api
 
       - name: Pytest
         run: pytest -q
