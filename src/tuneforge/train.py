@@ -21,6 +21,7 @@ from tuneforge.modeling import (
     select_precision,
 )
 from tuneforge.persistence import directory_size_bytes, save_json
+from tuneforge.provenance import runtime_provenance
 from tuneforge.telemetry import TelemetryCallback
 
 
@@ -116,15 +117,14 @@ def main() -> None:
 
     adapter_size = directory_size_bytes(adapter_dir)
 
+    provenance = runtime_provenance()
     metadata = {
+        "provenance": provenance,
         "config": asdict(config),
         "hardware": {
-            "cuda_available": torch.cuda.is_available(),
-            "gpu_name": (
-                torch.cuda.get_device_name(0)
-                if torch.cuda.is_available()
-                else None
-            ),
+            "cuda_available": provenance["cuda_available"],
+            "gpu_name": provenance["gpu_name"],
+            "compute_capability": provenance["compute_capability"],
             "precision": precision,
         },
         "parameters": summary,
