@@ -28,7 +28,7 @@ with tabs[0]:
 
     try:
         hardware = requests.get(f"{API_URL}/capabilities", timeout=3).json()
-    except Exception:
+    except requests.RequestException:
         hardware = {
             "can_train": False,
             "gpu_name": None,
@@ -95,7 +95,7 @@ with tabs[0]:
                         ).head(5)
 
                     st.dataframe(preview, use_container_width=True)
-                except Exception as exc:
+                except (ValueError, OSError, pd.errors.ParserError) as exc:
                     st.warning(f"Preview unavailable: {exc}")
 
         instruction_field = st.text_input("Instruction field", "instruction")
@@ -221,7 +221,7 @@ with tabs[0]:
             json={"config": payload, "launch": False},
             timeout=3,
         ).json()
-    except Exception:
+    except requests.RequestException:
         validation = {"valid": False, "errors": ["API unavailable"]}
 
     if validation.get("valid"):
@@ -256,7 +256,7 @@ with tabs[0]:
                 f"status: {result['status']}"
             )
             st.json(result)
-        except Exception as exc:
+        except requests.RequestException as exc:
             st.error(f"Could not create experiment: {exc}")
 
 with tabs[1]:
@@ -272,15 +272,15 @@ with tabs[1]:
         q2.metric("Running", queue_state.get("claimed", 0))
         q3.metric("Succeeded", queue_state.get("done", 0))
         q4.metric("Failed", queue_state.get("failed", 0))
-    except Exception:
-        pass
+    except requests.RequestException as exc:
+        st.caption(f"Queue status unavailable: {exc}")
 
     try:
         runs = requests.get(
             f"{API_URL}/experiments",
             timeout=5,
         ).json()
-    except Exception as exc:
+    except requests.RequestException as exc:
         runs = []
         st.warning(f"API unavailable: {exc}")
 
@@ -305,29 +305,33 @@ with tabs[1]:
 
         action1, action2 = st.columns(2)
 
-        if detail.get("status") in {"ready", "queued"}:
-            if action1.button("Cancel run", key=f"cancel-{selected_run}"):
-                response = requests.post(
-                    f"{API_URL}/experiments/{selected_run}/cancel",
-                    timeout=5,
-                )
-                if response.ok:
-                    st.success("Run cancelled.")
-                    st.rerun()
-                else:
-                    st.error(response.text)
+        if (
+            detail.get("status") in {"ready", "queued"}
+            and action1.button("Cancel run", key=f"cancel-{selected_run}")
+        ):
+            response = requests.post(
+                f"{API_URL}/experiments/{selected_run}/cancel",
+                timeout=5,
+            )
+            if response.ok:
+                st.success("Run cancelled.")
+                st.rerun()
+            else:
+                st.error(response.text)
 
-        if detail.get("status") in {"failed", "cancelled"}:
-            if action2.button("Retry run", key=f"retry-{selected_run}"):
+        if (
+            detail.get("status") in {"failed", "cancelled"}
+            and action2.button("Retry run", key=f"retry-{selected_run}")
+        ):
                 response = requests.post(
-                    f"{API_URL}/experiments/{selected_run}/retry",
-                    timeout=5,
-                )
-                if response.ok:
-                    st.success("Run re-queued.")
-                    st.rerun()
-                else:
-                    st.error(response.text)
+                f"{API_URL}/experiments/{selected_run}/retry",
+                timeout=5,
+            )
+            if response.ok:
+                st.success("Run re-queued.")
+                st.rerun()
+            else:
+                st.error(response.text)
 
         telemetry = requests.get(
             f"{API_URL}/experiments/{selected_run}/telemetry",
@@ -373,7 +377,7 @@ with tabs[2]:
             f"{API_URL}/adapters",
             timeout=5,
         ).json()
-    except Exception as exc:
+    except requests.RequestException as exc:
         adapters = []
         st.warning(f"API unavailable: {exc}")
 
