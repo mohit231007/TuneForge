@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 import yaml
 
-from tuneforge.queue import cancel_pending_job, enqueue_job, retry_job
+from tuneforge.execution_backend import get_execution_backend
 
 REGISTRY_DIR = Path("studio_runs")
 REGISTRY_DIR.mkdir(exist_ok=True)
@@ -115,7 +115,7 @@ def create_run(
     message = "Experiment created."
 
     if launch:
-        enqueue_job(run_id, str(config_path))
+        get_execution_backend().submit(run_id, str(config_path))
         status = "queued"
         message = "Experiment queued for a TuneForge worker."
 
@@ -201,7 +201,7 @@ def cancel_run(run_id: str) -> StudioRun:
             "this version only cancels queued/ready jobs safely."
         )
 
-    cancel_pending_job(run_id)
+    get_execution_backend().cancel(run_id)
     return set_run_status(run_id, "cancelled", "Run cancelled before execution.")
 
 
@@ -211,7 +211,7 @@ def retry_run(run_id: str) -> StudioRun:
     if run.status not in {"failed", "cancelled"}:
         raise ValueError("Only failed or cancelled runs can be retried.")
 
-    retry_job(run_id, run.config_path)
+    get_execution_backend().retry(run_id, run.config_path)
     return set_run_status(
         run_id,
         "queued",
