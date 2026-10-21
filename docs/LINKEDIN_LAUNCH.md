@@ -59,4 +59,18 @@ Do not publish this post until:
 - [x] actual loss history is recorded
 - [x] actual base-vs-adapted outputs are available
 - [x] public UI deployed at https://tuneforge-algosphere1.vercel.app
-- [ ] final live screenshots captured for the launch carousel
+- [x] final live production screenshots captured in Incognito for the launch carousel
+
+
+## Suggested carousel
+
+Use the real production screenshots in this order:
+
+1. Overview — Verified Experiment 001
+2. Experiment Builder — LoRA / QLoRA configuration
+3. Evaluation — deterministic checks
+4. Architecture — control-plane system design
+5. Adapter Registry — lifecycle/governance surface
+6. Compare — experiment and adapter comparison
+
+Lead with the Overview screenshot because it immediately proves the project has measured evidence rather than only UI.
