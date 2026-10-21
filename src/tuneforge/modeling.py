@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import torch
-from peft import LoraConfig
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, prepare_model_for_kbit_training
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from tuneforge.config import ExperimentConfig
 
@@ -16,7 +16,7 @@ def load_tokenizer(model_name: str):
 
 
 def select_precision() -> dict[str, bool]:
-    """Return precision flags that are safe for the active CUDA device."""
+    """Return mixed-precision flags that are safe for the active CUDA device."""
     if not torch.cuda.is_available():
         return {"fp16": False, "bf16": False}
 
@@ -26,14 +26,39 @@ def select_precision() -> dict[str, bool]:
     return {"fp16": True, "bf16": False}
 
 
-def load_base_model(model_name: str):
+def load_base_model(model_name: str, quantization_mode: str = "none"):
+    mode = quantization_mode.lower()
+
+    if mode not in {"none", "4bit"}:
+        raise ValueError(f"Unsupported quantization mode: {mode}")
+
+    if mode == "4bit":
+        if not torch.cuda.is_available():
+            raise RuntimeError("QLoRA 4-bit loading requires a CUDA GPU.")
+
+        major, _minor = torch.cuda.get_device_capability(0)
+        compute_dtype = torch.bfloat16 if major >= 8 else torch.float16
+
+        quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=compute_dtype,
+        )
+
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            quantization_config=quant_config,
+            device_map="auto",
+        )
+        return prepare_model_for_kbit_training(model)
+
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
     kwargs = {"dtype": dtype}
     if torch.cuda.is_available():
         kwargs["device_map"] = "auto"
 
-    model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
-    return model
+    return AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
 
 
 def build_lora_config(config: ExperimentConfig) -> LoraConfig:
