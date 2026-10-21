@@ -44,6 +44,7 @@ class QuantizationSettings:
 
 @dataclass(frozen=True)
 class ExperimentConfig:
+    workspace_id: str
     model_name: str
     dataset_name: str
     dataset: DatasetSettings
@@ -68,6 +69,7 @@ def load_config(path: str | Path) -> ExperimentConfig:
     quantization_raw = raw.get("quantization", {})
 
     return ExperimentConfig(
+        workspace_id=str(raw.get("workspace_id", "default")),
         model_name=raw["model_name"],
         dataset_name=dataset_name,
         dataset=DatasetSettings(
