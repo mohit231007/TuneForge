@@ -217,3 +217,62 @@ Every successful adapter starts as a candidate and can be promoted through an ex
 Adapters can also be archived before production. Every transition records a timestamp and reason.
 
 See docs/ORCHESTRATION.md for the current local implementation and the intended production evolution.
+
+
+## Public Web Experience
+
+TuneForge now includes a recruiter-facing Next.js product UI in `web/`.
+
+Run locally:
+
+    cd web
+    npm install
+    npm run dev
+
+Open:
+
+- Public web UI: http://localhost:3000
+- API: http://localhost:8000
+- Operator Streamlit UI: http://localhost:8501
+
+The public UI includes:
+
+- workspace-scoped overview
+- LoRA / QLoRA experiment builder
+- experiment status and safe retry/cancel actions
+- adapter registry and lifecycle promotion
+- run comparison
+- adapter comparison
+- deterministic evaluation checks
+- architecture / limitations view
+
+## Lightweight Access Boundary
+
+The API supports an optional environment key:
+
+    TUNEFORGE_API_KEY=change-me
+
+Clients send:
+
+    X-TuneForge-API-Key: change-me
+    X-TuneForge-Workspace: demo
+
+If no API key is configured, local development remains open.
+
+Workspace scoping is intentionally described as a lightweight control-plane boundary. It is not a replacement for enterprise identity, authorization, audit, or tenant isolation.
+
+## Execution Backends
+
+By default TuneForge uses the local filesystem-backed queue:
+
+    TUNEFORGE_EXECUTION_BACKEND=local
+
+A remote worker/scheduler can be connected through the webhook backend:
+
+    TUNEFORGE_EXECUTION_BACKEND=webhook
+    TUNEFORGE_REMOTE_WORKER_URL=https://gpu-worker.example.com
+    TUNEFORGE_REMOTE_WORKER_TOKEN=...
+
+This keeps the product independent of any specific GPU vendor while preserving the same Studio/API contract.
+
+See `docs/PUBLIC_DEMO.md` for launch positioning and claim discipline.
