@@ -27,7 +27,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile.worker
     command: ["python", "-m", "tuneforge.worker", "--poll-seconds", "3"]
     profiles: ["gpu-worker"]
     volumes:
