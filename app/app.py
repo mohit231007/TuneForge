@@ -263,6 +263,19 @@ with tabs[1]:
     st.subheader("Experiment runs")
 
     try:
+        queue_state = requests.get(
+            f"{API_URL}/queue",
+            timeout=5,
+        ).json()
+        q1, q2, q3, q4 = st.columns(4)
+        q1.metric("Queued", queue_state.get("pending", 0))
+        q2.metric("Running", queue_state.get("claimed", 0))
+        q3.metric("Succeeded", queue_state.get("done", 0))
+        q4.metric("Failed", queue_state.get("failed", 0))
+    except Exception:
+        pass
+
+    try:
         runs = requests.get(
             f"{API_URL}/experiments",
             timeout=5,
@@ -287,8 +300,34 @@ with tabs[1]:
 
         d1, d2, d3 = st.columns(3)
         d1.metric("Status", detail.get("status", "unknown"))
-        d2.metric("PID", detail.get("pid") or "—")
-        d3.metric("Created", detail.get("created_at", "—"))
+        d2.metric("Worker", detail.get("worker_id") or "—")
+        d3.metric("Updated", detail.get("updated_at", "—"))
+
+        action1, action2 = st.columns(2)
+
+        if detail.get("status") in {"ready", "queued"}:
+            if action1.button("Cancel run", key=f"cancel-{selected_run}"):
+                response = requests.post(
+                    f"{API_URL}/experiments/{selected_run}/cancel",
+                    timeout=5,
+                )
+                if response.ok:
+                    st.success("Run cancelled.")
+                    st.rerun()
+                else:
+                    st.error(response.text)
+
+        if detail.get("status") in {"failed", "cancelled"}:
+            if action2.button("Retry run", key=f"retry-{selected_run}"):
+                response = requests.post(
+                    f"{API_URL}/experiments/{selected_run}/retry",
+                    timeout=5,
+                )
+                if response.ok:
+                    st.success("Run re-queued.")
+                    st.rerun()
+                else:
+                    st.error(response.text)
 
         telemetry = requests.get(
             f"{API_URL}/experiments/{selected_run}/telemetry",
@@ -360,6 +399,7 @@ with tabs[2]:
                         params.get("trainable_percentage", 0),
                         4,
                     ),
+                    "lifecycle": item.get("lifecycle", "candidate"),
                     "created_at": item.get("created_at"),
                 }
             )
@@ -368,6 +408,59 @@ with tabs[2]:
             pd.DataFrame(adapter_rows),
             use_container_width=True,
         )
+
+        adapter_ids = [item["adapter_id"] for item in adapters]
+        selected_adapter = st.selectbox(
+            "Manage adapter lifecycle",
+            adapter_ids,
+        )
+        selected_record = next(
+            item for item in adapters
+            if item["adapter_id"] == selected_adapter
+        )
+        current_state = selected_record.get("lifecycle", "candidate")
+        st.write(f"Current lifecycle: **{current_state}**")
+
+        transitions = {
+            "candidate": ["validated", "archived"],
+            "validated": ["production", "archived"],
+            "production": ["archived"],
+            "archived": [],
+        }
+        allowed = transitions.get(current_state, [])
+
+        if allowed:
+            target_state = st.selectbox(
+                "Transition to",
+                allowed,
+                key=f"state-{selected_adapter}",
+            )
+            reason = st.text_input(
+                "Reason",
+                key=f"reason-{selected_adapter}",
+            )
+
+            if st.button(
+                "Apply lifecycle transition",
+                key=f"transition-{selected_adapter}",
+            ):
+                response = requests.post(
+                    f"{API_URL}/adapters/{selected_adapter}/transition",
+                    json={
+                        "target_state": target_state,
+                        "reason": reason or "Studio lifecycle transition.",
+                    },
+                    timeout=5,
+                )
+                if response.ok:
+                    st.success(
+                        f"{selected_adapter} moved to {target_state}."
+                    )
+                    st.rerun()
+                else:
+                    st.error(response.text)
+        else:
+            st.info("Archived adapters have no further lifecycle transitions.")
     else:
         st.info("No trained adapters registered yet.")
 
