@@ -11,6 +11,17 @@ services:
       - ./studio_uploads:/app/studio_uploads
       - ./job_queue:/app/job_queue
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_TUNEFORGE_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
   studio:
     build:
       context: .
