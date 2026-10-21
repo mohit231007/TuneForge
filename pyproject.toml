@@ -20,12 +20,12 @@ dependencies = [
   "fastapi>=0.115",
   "uvicorn>=0.32",
   "python-multipart>=0.0.12",
-  "requests>=2.32",
-  "bitsandbytes>=0.45"
+  "requests>=2.32"
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.8"]
+qlora = ["bitsandbytes>=0.45"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
