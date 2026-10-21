@@ -323,7 +323,7 @@ with tabs[1]:
             detail.get("status") in {"failed", "cancelled"}
             and action2.button("Retry run", key=f"retry-{selected_run}")
         ):
-                response = requests.post(
+            response = requests.post(
                 f"{API_URL}/experiments/{selected_run}/retry",
                 timeout=5,
             )
