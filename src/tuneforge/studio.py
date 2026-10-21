@@ -228,7 +228,7 @@ def list_runs(workspace_id: str | None = None) -> list[StudioRun]:
             run = get_run(path.parent.name)
             if workspace_id is None or run.workspace_id == workspace_id:
                 runs.append(run)
-        except Exception:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
             continue
 
     return sorted(runs, key=lambda run: run.created_at, reverse=True)
