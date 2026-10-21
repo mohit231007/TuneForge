@@ -31,7 +31,7 @@ qlora = ["bitsandbytes>=0.45"]
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 
 [tool.ruff]
 line-length = 100
