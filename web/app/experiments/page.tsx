@@ -19,6 +19,7 @@ export default function Experiments(){
   const [lr,setLr]=useState(0.0002);
   const [launch,setLaunch]=useState(false);
   const [message,setMessage]=useState("");
+  const [readOnly,setReadOnly]=useState(false);
 
   async function load(){try{setRuns(await api<Run[]>("/experiments"))}catch(e){setMessage(String(e))}}
   useEffect(()=>{load()},[]);
@@ -54,6 +55,11 @@ export default function Experiments(){
   return <div>
     <div className="hero"><div><div className="eyebrow">Experiment builder</div><h1>Configure an adaptation run</h1><p>Start with reproducible defaults, then move from LoRA to 4-bit QLoRA without changing the experiment contract.</p></div></div>
 
+    {readOnly&&<div className="success" style={{marginBottom:18}}>
+      Public demo mode is read-only. You can inspect the experiment configuration here;
+      self-host TuneForge with a CUDA worker to launch training.
+    </div>}
+
     <form className="card panel" onSubmit={submit}>
       <div className="formGrid">
         <div className="field"><label>Adaptation method</label><select value={method} onChange={e=>setMethod(e.target.value)}><option value="none">LoRA</option><option value="4bit">QLoRA · 4-bit NF4</option></select></div>
@@ -69,7 +75,9 @@ export default function Experiments(){
       </div>
       <div className="actions" style={{marginTop:18}}>
         <label className="muted"><input type="checkbox" checked={launch} onChange={e=>setLaunch(e.target.checked)}/> Queue immediately</label>
-        <button className="button primary" type="submit">Create experiment</button>
+        <button className="button primary" type="submit" disabled={readOnly}>
+          {readOnly?"Read-only demo":"Create experiment"}
+        </button>
       </div>
       {message&&<p className="muted">{message}</p>}
     </form>
